@@ -30,15 +30,15 @@ fi
 set -x
 
 # if there is no custom style mounted, then use osm-carto
-if [ ! "$(ls -A /data/style/)" ]; then
-    mv /home/renderer/src/openstreetmap-carto-backup/* /data/style/
-fi
+# if [ ! "$(ls -A /data/style/)" ]; then
+#     mv /home/renderer/src/openstreetmap-carto-backup/* /data/style/
+# fi
 
 # carto build
-if [ ! -f /data/style/mapnik.xml ]; then
-    cd /data/style/
-    carto ${NAME_MML:-project.mml} > mapnik.xml
-fi
+# if [ ! -f /data/style/mapnik.xml ]; then
+#     cd /data/style/
+#     carto ${NAME_MML:-project.mml} > mapnik.xml
+# fi
 
 if [ "$1" == "import" ]; then
     # Ensure that database directory is in right state
@@ -60,11 +60,11 @@ if [ "$1" == "import" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
     setPostgresPassword
 
-    # Download Luxembourg as sample if no data is provided
+    # Download Berlin as sample if no data is provided
     if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data/region.osm.pbf, so importing Luxembourg as example..."
-        DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
-        DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
+        echo "WARNING: No import file at /data/region.osm.pbf, so importing Berlin as example..."
+        DOWNLOAD_PBF="https://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf"
+        DOWNLOAD_POLY="https://download.geofabrik.de/europe/germany/berlin.poly"
     fi
 
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
@@ -95,14 +95,21 @@ if [ "$1" == "import" ]; then
         OSM2PGSQL_EXTRA_ARGS="${OSM2PGSQL_EXTRA_ARGS:-} --flat-nodes /data/database/flat_nodes.bin"
     fi
 
+    osmconvert /data/region.osm.pbf -o=/data/database/a.o5m
+    osmfilter /data/database/a.o5m --parameter-file=/home/renderer/src/openptmap/toolchain_pt.filter -o=/data/database/gis.o5m
+    chown renderer:renderer /data/database/gis.o5m
+
     # Import data
     sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore  \
-      --tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
       --number-processes ${THREADS:-4}  \
-      -S /data/style/${NAME_STYLE:-openstreetmap-carto.style}  \
-      /data/region.osm.pbf  \
+      -S /home/renderer/src/openptmap/osm2pgsql_pt.style  \
+      /data/database/gis.o5m  \
       ${OSM2PGSQL_EXTRA_ARGS:-}  \
     ;
+    #--tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
+
+    #rm -f /data/database/a.o5m
+    #rm -f /data/database/gis.o5m
 
     # old flat-nodes dir
     if [ -f /nodes/flat_nodes.bin ] && ! [ -f /data/database/flat_nodes.bin ]; then

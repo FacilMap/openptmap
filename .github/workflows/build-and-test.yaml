@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE : ${{ github.repository_owner }}/openstreetmap-tile-server
+  IMAGE : facilmap/openptmap
   TAG   : ${{ github.sha }}
 
 jobs:
@@ -65,7 +65,7 @@ jobs:
         cache-from : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }}
         cache-to   : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }},mode=max
     -
-      name: Import Luxembourg
+      name: Import Berlin
       if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         docker  volume  create  ${VOLUME}

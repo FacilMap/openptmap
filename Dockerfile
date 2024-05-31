@@ -15,15 +15,15 @@ RUN apt-get update \
 
 ###########################################################################################################
 
-FROM compiler-common AS compiler-stylesheet
-RUN cd ~ \
-&& git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
-&& cd openstreetmap-carto \
-&& sed -i 's/, "unifont Medium", "Unifont Upper Medium"//g' style/fonts.mss \
-&& sed -i 's/"Noto Sans Tibetan Regular",//g' style/fonts.mss \
-&& sed -i 's/"Noto Sans Tibetan Bold",//g' style/fonts.mss \
-&& sed -i 's/Noto Sans Syriac Eastern Regular/Noto Sans Syriac Regular/g' style/fonts.mss \
-&& rm -rf .git
+# FROM compiler-common AS compiler-stylesheet
+# RUN cd ~ \
+# && git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+# && cd openstreetmap-carto \
+# && sed -i 's/, "unifont Medium", "Unifont Upper Medium"//g' style/fonts.mss \
+# && sed -i 's/"Noto Sans Tibetan Regular",//g' style/fonts.mss \
+# && sed -i 's/"Noto Sans Tibetan Bold",//g' style/fonts.mss \
+# && sed -i 's/Noto Sans Syriac Eastern Regular/Noto Sans Syriac Regular/g' style/fonts.mss \
+# && rm -rf .git
 
 ###########################################################################################################
 
@@ -34,6 +34,19 @@ RUN mkdir -p /home/renderer/src \
 && cd regional \
 && rm -rf .git \
 && chmod u+x /home/renderer/src/regional/trim_osc.py
+
+###########################################################################################################
+
+FROM compiler-common AS utils
+RUN apt-get install -y --no-install-recommends gcc zlib1g-dev
+
+COPY ./utils /utils
+WORKDIR /utils
+RUN apt-get install -y --no-install-recommends gcc zlib1g-dev \
+&& mkdir out \
+&& cc -x c osmconvert.c -lz -O3 -o out/osmconvert \
+&& cc -x c osmfilter.c -O3 -o out/osmfilter \
+&& cc -x c osmupdate.c -o out/osmupdate
 
 ###########################################################################################################
 
@@ -66,7 +79,7 @@ RUN apt-get update \
  liblua5.3-dev \
  lua5.3 \
  mapnik-utils \
- npm \
+# npm \
  osm2pgsql \
  osmium-tool \
  osmosis \
@@ -102,7 +115,7 @@ RUN pip3 install \
  pyyaml
 
 # Install carto for stylesheet
-RUN npm install -g carto@1.2.0
+#RUN npm install -g carto@1.2.0
 
 # Configure Apache
 RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
@@ -149,14 +162,14 @@ RUN mkdir -p /run/renderd/ \
   &&  mv  /var/cache/renderd/tiles/            /data/tiles/     \
   &&  chown  -R  renderer: /data/tiles \
   &&  ln  -s  /data/database/postgres  /var/lib/postgresql/$PG_VERSION/main             \
-  &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
+#  &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
   &&  ln  -s  /data/tiles              /var/cache/renderd/tiles                \
 ;
 
 RUN echo '[default] \n\
 URI=/tile/ \n\
 TILEDIR=/var/cache/renderd/tiles \n\
-XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
+XML=/home/renderer/src/openptmap/mapnik_pt.xml \n\
 HOST=localhost \n\
 TILESIZE=256 \n\
 MAXZOOM=20' >> /etc/renderd.conf \
@@ -165,7 +178,11 @@ MAXZOOM=20' >> /etc/renderd.conf \
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
-COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
+#COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
+COPY ./openptmap /home/renderer/src/openptmap
+
+# Install utils
+COPY --from=utils /utils/out/* /usr/bin/
 
 # Start running
 COPY run.sh /
