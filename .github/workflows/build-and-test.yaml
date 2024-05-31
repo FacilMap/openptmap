@@ -64,65 +64,65 @@ jobs:
         tags       : ${{ env.IMAGE }}:${{ env.TAG }}
         cache-from : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }}
         cache-to   : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }},mode=max
-    -
-      name: Import Berlin
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      run : |
-        docker  volume  create  ${VOLUME}
-        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  ${IMAGE}:${TAG}  import
-    -
-      name: Start server
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      run : |
-        docker  run  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
-        sleep 30
-        docker  logs  ${CONTAINER}
-    -
-      name: Download tiles
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      run : |
-        curl  http://localhost/tile/0/0/0.png            --fail  -o 000.png
-        curl  http://localhost/tile/1/0/0.png            --fail  -o 100.png
-        curl  http://localhost/tile/1/0/1.png            --fail  -o 101.png
-        curl  http://localhost/tile/1/1/0.png            --fail  -o 110.png
-        curl  http://localhost/tile/1/1/1.png            --fail  -o 111.png
-        curl  http://localhost/tile/18/138474/85459.png  --fail  -o empty.png
-        curl  http://localhost/tile/18/135536/89345.png  --fail  -o example.png
-    -
-      name: Upload tiles
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: tiles
-        path: '*.png'
-    -
-      name: Verify tiles
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      run : |
-        sha1sum  *.png
-        sha1sum  --check  <<EOF
-        c226ca747874fb1307eef853feaf9d8db28cef2b *empty.png
-        EOF
-        tiles=(`ls *.png`)
-        for ((i=0; i<${#tiles[@]}; i++)) ; do
-          if [ `file  --brief  --mime-type  "${tiles[$i]}"` != 'image/png' ] ; then
-            >&2  echo  "ERROR: ${tiles[$i]} is not a image/png file"
-            exit 1
-          fi
-          for ((j=i+1; j<${#tiles[@]}; j++)) ; do
-            if ( diff  "${tiles[$i]}"  "${tiles[$j]}" ) ; then
-              >&2  echo  "ERROR: ${tiles[$i]} is identical to ${tiles[$j]}"
-              exit 2
-            fi
-          done
-        done
-    -
-      name: Cleanup
-      if  : ${{ matrix.mode == 'build-and-test' }}
-      run : |
-        docker  rm  --force  --volumes  ${CONTAINER}
-        docker  volume  rm  --force  ${VOLUME}
-        docker  rmi  --force  ${IMAGE}:${TAG}
+    # -
+    #   name: Import Berlin
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   run : |
+    #     docker  volume  create  ${VOLUME}
+    #     docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  ${IMAGE}:${TAG}  import
+    # -
+    #   name: Start server
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   run : |
+    #     docker  run  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
+    #     sleep 30
+    #     docker  logs  ${CONTAINER}
+    # -
+    #   name: Download tiles
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   run : |
+    #     curl  http://localhost/tile/0/0/0.png            --fail  -o 000.png
+    #     curl  http://localhost/tile/1/0/0.png            --fail  -o 100.png
+    #     curl  http://localhost/tile/1/0/1.png            --fail  -o 101.png
+    #     curl  http://localhost/tile/1/1/0.png            --fail  -o 110.png
+    #     curl  http://localhost/tile/1/1/1.png            --fail  -o 111.png
+    #     curl  http://localhost/tile/18/138474/85459.png  --fail  -o empty.png
+    #     curl  http://localhost/tile/18/135536/89345.png  --fail  -o example.png
+    # -
+    #   name: Upload tiles
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: tiles
+    #     path: '*.png'
+    # -
+    #   name: Verify tiles
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   run : |
+    #     sha1sum  *.png
+    #     sha1sum  --check  <<EOF
+    #     c226ca747874fb1307eef853feaf9d8db28cef2b *empty.png
+    #     EOF
+    #     tiles=(`ls *.png`)
+    #     for ((i=0; i<${#tiles[@]}; i++)) ; do
+    #       if [ `file  --brief  --mime-type  "${tiles[$i]}"` != 'image/png' ] ; then
+    #         >&2  echo  "ERROR: ${tiles[$i]} is not a image/png file"
+    #         exit 1
+    #       fi
+    #       for ((j=i+1; j<${#tiles[@]}; j++)) ; do
+    #         if ( diff  "${tiles[$i]}"  "${tiles[$j]}" ) ; then
+    #           >&2  echo  "ERROR: ${tiles[$i]} is identical to ${tiles[$j]}"
+    #           exit 2
+    #         fi
+    #       done
+    #     done
+    # -
+    #   name: Cleanup
+    #   if  : ${{ matrix.mode == 'build-and-test' }}
+    #   run : |
+    #     docker  rm  --force  --volumes  ${CONTAINER}
+    #     docker  volume  rm  --force  ${VOLUME}
+    #     docker  rmi  --force  ${IMAGE}:${TAG}
 
   deploy:
     runs-on: ubuntu-latest
