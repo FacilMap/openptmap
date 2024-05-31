@@ -19,7 +19,7 @@ services:
         cmd: run
 ```
 
-Specify a PBF file for the region that you want to render and its corresponding polygon as `DOWNLOAD_PBF` and `DOWNLOAD_POLY`. Alternatively, mount them as `/data/region.osm.pbf` and `/data/region.poly`.
+Specify a PBF file for the region that you want to render and its corresponding polygon as `DOWNLOAD_PBF` and `DOWNLOAD_POLY`. Alternatively, mount one [converted to O5M](https://wiki.openstreetmap.org/wiki/Osmconvert) as `/data/region.o5m` and `/data/region.poly`. Get a specific region from [Geofabrik](https://download.geofabrik.de/) or the whole planet from [Planet.osm](https://wiki.openstreetmap.org/wiki/Planet.osm) (in that case, `DOWNLOAD_POLY` can be omitted).
 
 The docker container will expose a webserver under port `80` and the Postgres server (with PostGIS) on port `5432`.
 

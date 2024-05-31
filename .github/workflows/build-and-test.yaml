@@ -69,12 +69,12 @@ jobs:
       if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         docker  volume  create  ${VOLUME}
-        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  ${IMAGE}:${TAG}  import
+        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  ${IMAGE}:${TAG}  import
     -
       name: Start server
       if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
-        docker  run  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
+        docker  run  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=disabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
         sleep 30
         docker  logs  ${CONTAINER}
     -

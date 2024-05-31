@@ -15,7 +15,7 @@ function setPostgresPassword() {
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
-    echo "    import: Set up the database and import /data/region.osm.pbf"
+    echo "    import: Set up the database and import /data/region.o5m"
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
@@ -61,15 +61,15 @@ if [ "$1" == "import" ]; then
     setPostgresPassword
 
     # Download Berlin as sample if no data is provided
-    if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data/region.osm.pbf, so importing Berlin as example..."
+    if [ ! -f /data/region.o5m ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
+        echo "WARNING: No import file at /data/region.o5m, so importing Berlin as example..."
         DOWNLOAD_PBF="https://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf"
         DOWNLOAD_POLY="https://download.geofabrik.de/europe/germany/berlin.poly"
     fi
 
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data/region.osm.pbf
+        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O- | osmconvert - -o=/data/region.o5m
         if [ -n "${DOWNLOAD_POLY:-}" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
             wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
@@ -78,7 +78,7 @@ if [ "$1" == "import" ]; then
 
     if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
-        REPLICATION_TIMESTAMP=`osmium fileinfo -g header.option.osmosis_replication_timestamp /data/region.osm.pbf`
+        REPLICATION_TIMESTAMP=`osmium fileinfo -g header.option.osmosis_replication_timestamp /data/region.o5m`
 
         # initial setup of osmosis workspace (for consecutive updates)
         sudo -E -u renderer openstreetmap-tiles-update-expire.sh $REPLICATION_TIMESTAMP
@@ -95,8 +95,7 @@ if [ "$1" == "import" ]; then
         OSM2PGSQL_EXTRA_ARGS="${OSM2PGSQL_EXTRA_ARGS:-} --flat-nodes /data/database/flat_nodes.bin"
     fi
 
-    osmconvert /data/region.osm.pbf -o=/data/database/a.o5m
-    osmfilter /data/database/a.o5m --parameter-file=/home/renderer/src/openptmap/toolchain_pt.filter -o=/data/database/gis.o5m
+    osmfilter /data/region.o5m --parameter-file=/home/renderer/src/openptmap/toolchain_pt.filter -o=/data/database/gis.o5m
     chown renderer:renderer /data/database/gis.o5m
 
     # Import data
