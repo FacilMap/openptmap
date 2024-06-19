@@ -69,7 +69,7 @@ if [ "$1" == "import" ]; then
 
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O- | osmconvert - -o=/data/region.o5m
+        wget --tries=200 ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O- | osmconvert --drop-author - -o=/data/region.o5m
         if [ -n "${DOWNLOAD_POLY:-}" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
             wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
