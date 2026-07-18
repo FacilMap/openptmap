@@ -2,7 +2,7 @@
 
 This is a modified version of [openstreetmap-tile-server](https://github.com/Overv/openstreetmap-tile-server) that is a hacky attempt to run [Openptmap](https://wiki.openstreetmap.org/wiki/Openptmap).
 
-Right now it relies on the [original Openptmap files](https://github.com/giggls/openptmap) and filters the provided OSM file by hand as explained in the [Openptmap instructions](https://wiki.openstreetmap.org/wiki/Openptmap/Installation#Fill_the_Database). An improvement would probably be to write a LUA file that can be understood by osm2pgsql rather than using osmfilter, then the unmodified version of openstreetmap-tile-server can be used. If you have the competence to write such a LUA file, it would be greatly appreciated.
+Right now it relies on the [original Openptmap files](https://github.com/giggls/openptmap) and filters the provided OSM file by hand as explained in the [Openptmap instructions](https://wiki.openstreetmap.org/wiki/Openptmap/Installation#Fill_the_Database). A rewrite of the style using CartoCSS and osm2pgsql Flex Output is [in development](https://github.com/FacilMap/tiles/tree/main/pt) and will allow running the map with a modern software stack and live updates through replication.
 
 ## Usage
 
